@@ -37,6 +37,12 @@
             50% { transform: scale(1.15); opacity: 0.8; }
         }
         .animate-ping-slow { animation: ping-slow 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
         
         .rtl { direction: rtl; }
         .ltr { direction: ltr; }
@@ -45,17 +51,6 @@
 <body>
 <div id="app" v-cloak :class="lang === 'fr' ? 'ltr' : 'rtl'" class="flex flex-col min-h-screen">
     
-    <!-- رسالة الترحيب الجذابة -->
-    <div v-if="showWelcome" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[300] flex items-center justify-center p-4 animate-fade">
-        <div class="bg-white rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl relative overflow-hidden border-t-8 border-emerald-600">
-            <button @click="showWelcome = false" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 font-black text-2xl transition-colors">✕</button>
-            <div class="text-6xl mb-4 animate-bounce">✨</div>
-            <h2 class="text-3xl font-black text-emerald-900 mb-4">{{ t('welcome_title') }}</h2>
-            <p class="text-gray-600 text-lg font-bold mb-8 leading-relaxed">{{ t('welcome_desc') }}</p>
-            <button @click="showWelcome = false" class="btn-emerald text-xl px-12 py-3 w-full shadow-lg hover:scale-105 transition-transform">{{ t('start_now') }} 🚀</button>
-        </div>
-    </div>
-
     <header class="bg-emerald-900 text-white p-4 shadow-xl flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-4">
             <button v-if="view !== 'home'" @click="goBack" class="bg-emerald-800 hover:bg-emerald-700 p-2 rounded-xl text-sm font-bold transition px-4">{{ t('back') }}</button>
@@ -67,27 +62,35 @@
         </div>
     </header>
 
-    <main class="container mx-auto p-4 flex-1">
-        <!-- الرئيسية -->
-        <div v-if="view === 'home'" class="text-center py-20">
-            <h2 class="text-4xl md:text-6xl font-black text-slate-800 mb-10 drop-shadow-sm">{{ t('welcome_msg') }}</h2>
-            <button @click="loadCompetitions(); view='competitions'" class="bg-emerald-600 text-white text-xl px-12 py-6 rounded-full shadow-2xl font-black hover:scale-105 transition-transform">{{ t('show_competitions') }} 🏆</button>
+    <main class="container mx-auto p-4 flex-1 flex flex-col justify-center">
+        <!-- الرئيسية الجذابة -->
+        <div v-if="view === 'home'" class="flex flex-col items-center justify-center py-10 md:py-20 px-4 animate-fade flex-1">
+            <div class="relative mb-10">
+                <div class="absolute inset-0 bg-emerald-400 blur-[70px] opacity-40 rounded-full animate-pulse"></div>
+                <div class="text-8xl md:text-9xl mb-6 animate-float relative z-10 drop-shadow-2xl">🏆</div>
+            </div>
+            <h2 class="text-5xl md:text-7xl font-black text-slate-800 mb-6 drop-shadow-md text-center bg-clip-text text-transparent bg-gradient-to-r from-emerald-900 to-blue-800">{{ t('welcome_msg') }}</h2>
+            <p class="text-xl md:text-2xl text-slate-600 font-bold mb-12 text-center max-w-3xl leading-relaxed">{{ t('welcome_desc') }}</p>
+            <button @click="loadCompetitions(); view='competitions'" class="relative group bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-2xl px-14 py-6 rounded-full shadow-[0_15px_40px_-10px_rgba(5,150,105,0.7)] font-black hover:scale-105 transition-all duration-300 overflow-hidden">
+                <span class="relative z-10">{{ t('show_competitions') }} 🚀</span>
+                <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+            </button>
         </div>
 
         <!-- قائمة المسابقات -->
-        <div v-if="view === 'competitions'" class="max-w-4xl mx-auto space-y-6">
-            <h2 class="text-3xl font-black text-center text-emerald-900 underline decoration-blue-500 decoration-4">{{ t('open_competitions') }}</h2>
+        <div v-if="view === 'competitions'" class="max-w-4xl mx-auto space-y-6 w-full">
+            <h2 class="text-3xl font-black text-center text-emerald-900 underline decoration-blue-500 decoration-4 mb-8">{{ t('open_competitions') }}</h2>
             <div v-for="comp in competitions" :key="comp.id" class="card flex flex-col md:flex-row justify-between items-center border-r-8 border-emerald-600 hover:shadow-2xl transition">
                 <div>
                     <h3 class="text-2xl font-black text-emerald-900">{{ comp.name_ar }}</h3>
-                    <p class="text-slate-500 text-xs font-bold">📅 {{ t('reg_until') }} {{ formatDate(comp.end_date) }}</p>
+                    <p class="text-slate-500 text-xs font-bold mt-1">📅 {{ t('reg_until') }} {{ formatDate(comp.end_date) }}</p>
                 </div>
                 <button @click="openRegistration(comp)" class="btn-emerald md:w-auto px-12 mt-4 md:mt-0">{{ t('register_team') }} ➕</button>
             </div>
         </div>
 
         <!-- تسجيل الفريق -->
-        <div v-if="view === 'register_team'" class="max-w-2xl mx-auto card border-t-8 border-emerald-600">
+        <div v-if="view === 'register_team'" class="max-w-2xl mx-auto card border-t-8 border-emerald-600 w-full">
             <div class="flex justify-between mb-10 relative">
                 <div class="absolute top-1/2 w-full h-1 bg-gray-200 -z-1 translate-y-[-50%]"></div>
                 <div v-for="s in 3" :key="s" class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10" :class="regStep >= s ? 'bg-emerald-600 text-white shadow-xl' : 'bg-gray-200 text-gray-500'">{{ s }}</div>
@@ -100,12 +103,12 @@
                     <input v-model="m.name" :placeholder="t('member_name_placeholder')" class="input-field text-sm mb-2">
                     <input v-model="m.reg_no" :placeholder="t('reg_no_placeholder')" class="input-field text-sm">
                 </div>
-                <button @click="regStep = 2" :disabled="!isStep1Valid" class="btn-emerald">{{ t('next') }} ➡</button>
+                <button @click="regStep = 2" :disabled="!isStep1Valid" class="btn-emerald w-full">{{ t('next') }} ➡</button>
             </div>
 
             <div v-if="regStep === 2" class="space-y-6">
                 <h3 class="font-black text-emerald-800">📎 {{ t('upload_docs') }}</h3>
-                <div v-for="(m, idx) in regForm.members" :key="idx" class="p-4 bg-slate-50 rounded-2xl">
+                <div v-for="(m, idx) in regForm.members" :key="idx" class="p-4 bg-slate-50 rounded-2xl border">
                     <p class="font-black mb-2">{{ m.name }}</p>
                     <div v-for="fileType in selectedComp.required_files" :key="fileType" class="mb-3">
                         <label class="text-xs font-black text-blue-700">{{ fileType }}</label>
@@ -138,43 +141,45 @@
         </div>
 
         <!-- لوحة المشرف -->
-        <div v-if="view === 'admin'" class="card shadow-2xl">
+        <div v-if="view === 'admin'" class="card shadow-2xl w-full">
             <div class="flex gap-2 border-b overflow-x-auto pb-2 mb-6">
-                <button @click="adminTab = 'teams'; loadTeams()" :class="adminTab==='teams'?'border-b-4 border-blue-600 text-blue-700':'text-gray-600'" class="px-5 py-2 font-black text-sm">👥 {{ t('teams') }}</button>
-                <button @click="adminTab = 'manage_comp'; loadCompetitions()" :class="adminTab==='manage_comp'?'border-b-4 border-blue-600 text-blue-700':''" class="px-5 py-2 font-black text-sm">📋 {{ t('competitions') }}</button>
-                <button @click="adminTab = 'manage_tracks'" :class="adminTab==='manage_tracks'?'border-b-4 border-blue-600 text-blue-700':''" class="px-5 py-2 font-black text-sm">🎯 {{ t('tracks') }}</button>
-                <button @click="adminTab = 'bulk_questions'; getQuestionCount()" :class="adminTab==='bulk_questions'?'border-b-4 border-blue-600 text-blue-700':''" class="px-5 py-2 font-black text-sm">📚 {{ t('questions_bank') }}</button>
-                <button @click="adminTab = 'engine_start'; loadCompetitions()" :class="adminTab==='engine_start'?'border-b-4 border-emerald-600 text-emerald-700':''" class="px-5 py-2 font-black text-sm">⚡ {{ t('start_match') }}</button>
-                <button @click="adminTab = 'new_comp'" :class="adminTab==='new_comp'?'border-b-4 border-emerald-600 text-emerald-700':''" class="px-5 py-2 font-black text-sm">✨ {{ t('new_competition') }}</button>
+                <button @click="adminTab = 'teams'; loadTeams()" :class="adminTab==='teams'?'border-b-4 border-blue-600 text-blue-700':'text-gray-600'" class="px-5 py-2 font-black text-sm whitespace-nowrap">👥 {{ t('teams') }}</button>
+                <button @click="adminTab = 'manage_comp'; loadCompetitions()" :class="adminTab==='manage_comp'?'border-b-4 border-blue-600 text-blue-700':''" class="px-5 py-2 font-black text-sm whitespace-nowrap">📋 {{ t('competitions') }}</button>
+                <button @click="adminTab = 'manage_tracks'" :class="adminTab==='manage_tracks'?'border-b-4 border-blue-600 text-blue-700':''" class="px-5 py-2 font-black text-sm whitespace-nowrap">🎯 {{ t('tracks') }}</button>
+                <button @click="adminTab = 'bulk_questions'; getQuestionCount()" :class="adminTab==='bulk_questions'?'border-b-4 border-blue-600 text-blue-700':''" class="px-5 py-2 font-black text-sm whitespace-nowrap">📚 {{ t('questions_bank') }}</button>
+                <button @click="adminTab = 'engine_start'; loadCompetitions()" :class="adminTab==='engine_start'?'border-b-4 border-emerald-600 text-emerald-700':''" class="px-5 py-2 font-black text-sm whitespace-nowrap">⚡ {{ t('start_match') }}</button>
+                <button @click="adminTab = 'new_comp'" :class="adminTab==='new_comp'?'border-b-4 border-emerald-600 text-emerald-700':''" class="px-5 py-2 font-black text-sm whitespace-nowrap">✨ {{ t('new_competition') }}</button>
             </div>
 
             <!-- الفرق -->
             <div v-if="adminTab === 'teams'" class="overflow-x-auto">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex justify-between items-center mb-4 min-w-[600px]">
                     <h3 class="font-black text-emerald-800 text-lg">{{ t('teams') }}</h3>
                     <button @click="loadCompetitions(); view = 'competitions'" class="btn-emerald bg-blue-600 hover:bg-blue-500 text-sm py-2 px-6">➕ {{ t('register_as_admin') }}</button>
                 </div>
-                <table class="w-full text-right text-xs min-w-[800px] border">
-                    <thead class="bg-emerald-800 text-white">
-                        <th class="p-3">{{ t('team') }}</th><th>{{ t('members') }}</th><th>{{ t('payment_proof') }}</th><th>{{ t('status') }}</th>
-                    </thead>
-                    <tbody>
-                        <tr v-for="team in allTeams" :key="team.id" class="border-b hover:bg-gray-50">
-                            <td class="p-2 font-bold">{{ team.team_name }}<br><span class="text-blue-600 text-[10px]">{{ team.whatsapp_number }}</span></td>
-                            <td class="p-2"><div v-for="m in team.members_data" class="text-[9px] border-b py-1"><b>{{ m.name }}</b> ({{ m.reg_no }})<div class="flex gap-1"><a v-for="(url,type) in m.files" :href="url" target="_blank" class="text-blue-500 underline">📎{{ type }}</a></div></div></td>
-                            <td class="p-2"><a :href="team.payment_proof_url" target="_blank" class="bg-amber-100 px-2 py-1 rounded text-amber-700">{{ t('view_receipt') }}</a></td>
-                            <td class="p-2">
-                                <div class="flex flex-col gap-1">
-                                    <button v-if="team.status !== 'accepted'" @click="updateTeamStatus(team, 'accepted')" class="bg-green-600 text-white px-3 py-1 rounded text-[10px]">{{ t('accept') }}</button>
-                                    <button v-if="team.status !== 'rejected' && team.status !== 'eliminated'" @click="updateTeamStatus(team, 'rejected')" class="bg-red-600 text-white px-3 py-1 rounded text-[10px]">{{ t('reject') }}</button>
-                                    <span v-if="team.status === 'accepted'" class="text-green-700 font-bold">✅ {{ t('accepted') }}</span>
-                                    <span v-if="team.status === 'rejected'" class="text-red-700 font-bold">❌ {{ t('rejected') }}</span>
-                                    <span v-if="team.status === 'eliminated'" class="text-slate-500 font-bold">🛑 {{ t('eliminated_status') }}</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs min-w-[800px] border">
+                        <thead class="bg-emerald-800 text-white">
+                            <th class="p-3">{{ t('team') }}</th><th>{{ t('members') }}</th><th>{{ t('payment_proof') }}</th><th>{{ t('status') }}</th>
+                        </thead>
+                        <tbody>
+                            <tr v-for="team in allTeams" :key="team.id" class="border-b hover:bg-gray-50">
+                                <td class="p-2 font-bold">{{ team.team_name }}<br><span class="text-blue-600 text-[10px]">{{ team.whatsapp_number }}</span></td>
+                                <td class="p-2"><div v-for="m in team.members_data" class="text-[9px] border-b py-1"><b>{{ m.name }}</b> ({{ m.reg_no }})<div class="flex gap-1"><a v-for="(url,type) in m.files" :href="url" target="_blank" class="text-blue-500 underline">📎{{ type }}</a></div></div></td>
+                                <td class="p-2"><a :href="team.payment_proof_url" target="_blank" class="bg-amber-100 px-2 py-1 rounded text-amber-700">{{ t('view_receipt') }}</a></td>
+                                <td class="p-2">
+                                    <div class="flex flex-col gap-1">
+                                        <button v-if="team.status !== 'accepted'" @click="updateTeamStatus(team, 'accepted')" class="bg-green-600 text-white px-3 py-1 rounded text-[10px]">{{ t('accept') }}</button>
+                                        <button v-if="team.status !== 'rejected' && team.status !== 'eliminated'" @click="updateTeamStatus(team, 'rejected')" class="bg-red-600 text-white px-3 py-1 rounded text-[10px]">{{ t('reject') }}</button>
+                                        <span v-if="team.status === 'accepted'" class="text-green-700 font-bold">✅ {{ t('accepted') }}</span>
+                                        <span v-if="team.status === 'rejected'" class="text-red-700 font-bold">❌ {{ t('rejected') }}</span>
+                                        <span v-if="team.status === 'eliminated'" class="text-slate-500 font-bold">🛑 {{ t('eliminated_status') }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- المسارات -->
@@ -220,38 +225,37 @@
             </div>
 
             <!-- بنك الأسئلة -->
-            <div v-if="adminTab === 'bulk_questions'" class="max-w-2xl mx-auto"><div class="bg-blue-600 text-white p-4 rounded-2xl flex justify-between"><span>📊 {{ t('total_questions') }}: {{ qCount }}</span><button @click="getQuestionCount" class="bg-white/20 px-3 py-1 rounded">{{ t('refresh') }}</button></div><select v-model="targetRound" class="input-field my-4"><option v-for="r in Object.keys(roundsConfig)" :key="r">{{ r }}</option></select><textarea v-model="bulkInput" rows="6" class="input-field font-mono text-xs" :placeholder="t('bulk_placeholder')"></textarea><button @click="processBulkQuestions" class="btn-emerald py-4">📥 {{ t('import_questions') }}</button></div>
+            <div v-if="adminTab === 'bulk_questions'" class="max-w-2xl mx-auto"><div class="bg-blue-600 text-white p-4 rounded-2xl flex justify-between"><span>📊 {{ t('total_questions') }}: {{ qCount }}</span><button @click="getQuestionCount" class="bg-white/20 px-3 py-1 rounded">{{ t('refresh') }}</button></div><select v-model="targetRound" class="input-field my-4"><option v-for="r in Object.keys(roundsConfig)" :key="r">{{ r }}</option></select><textarea v-model="bulkInput" rows="6" class="input-field font-mono text-xs" :placeholder="t('bulk_placeholder')"></textarea><button @click="processBulkQuestions" class="btn-emerald py-4 w-full">📥 {{ t('import_questions') }}</button></div>
 
             <!-- بدء المسابقة -->
             <div v-if="adminTab === 'engine_start'" class="text-center">
                 <div v-if="matchStep === 'setup'">
-                    <!-- اختيار المسابقة الإجباري -->
-                    <select v-model="activeMatchCompId" class="input-field w-64 mx-auto mb-4 font-bold border-2 border-blue-500 bg-blue-50 text-blue-900">
+                    <select v-model="activeMatchCompId" class="input-field max-w-sm mx-auto mb-4 font-bold border-2 border-blue-500 bg-blue-50 text-blue-900 block">
                         <option :value="null" disabled>-- {{ t('select_competition') }} --</option>
                         <option v-for="c in competitions" :key="c.id" :value="c.id">{{ c.name_ar }}</option>
                     </select>
 
-                    <select v-model="activeMatchRound" class="input-field w-64 mx-auto mb-6 border-2 border-emerald-500">
+                    <select v-model="activeMatchRound" class="input-field max-w-sm mx-auto mb-6 border-2 border-emerald-500 block">
                         <option v-for="r in Object.keys(roundsConfig).filter(x => x !== 'كسر التعادل')" :key="r" :value="r">{{ r }}</option>
                     </select>
                     <button type="button" @click="prepareAttendance" :disabled="!activeMatchCompId" class="btn-emerald text-xl px-16">▶ {{ t('prepare_attendance') }}</button>
                 </div>
-                <div v-if="matchStep === 'attendance'" class="space-y-4">
+                <div v-if="matchStep === 'attendance'" class="space-y-4 max-w-2xl mx-auto">
                     <h3 class="font-black text-xl">✅ {{ t('confirm_attendance') }}</h3>
-                    <div v-for="team in acceptedTeamsWithAttendance" :key="team.id" class="flex justify-between p-4 bg-white rounded-2xl shadow">
-                        <span class="font-bold">{{ team.team_name }}</span>
+                    <div v-for="team in acceptedTeamsWithAttendance" :key="team.id" class="flex justify-between items-center p-4 bg-white rounded-2xl shadow border">
+                        <span class="font-bold text-lg">{{ team.team_name }}</span>
                         <div class="flex gap-2">
-                            <button @click="team.is_present = true" :class="team.is_present ? 'bg-green-600 text-white' : 'bg-gray-200'" class="px-6 py-2 rounded-xl font-bold">{{ t('present') }}</button>
-                            <button @click="team.is_present = false" :class="!team.is_present ? 'bg-red-600 text-white' : 'bg-gray-200'" class="px-6 py-2 rounded-xl font-bold">{{ t('absent') }}</button>
+                            <button @click="team.is_present = true" :class="team.is_present ? 'bg-green-600 text-white' : 'bg-gray-200'" class="px-6 py-2 rounded-xl font-bold transition">{{ t('present') }}</button>
+                            <button @click="team.is_present = false" :class="!team.is_present ? 'bg-red-600 text-white' : 'bg-gray-200'" class="px-6 py-2 rounded-xl font-bold transition">{{ t('absent') }}</button>
                         </div>
                     </div>
-                    <button @click="runMatchLottery" class="btn-emerald bg-indigo-600 mt-8 py-5 text-2xl">🎲 {{ t('draw_lottery') }}</button>
+                    <button @click="runMatchLottery" class="btn-emerald bg-indigo-600 mt-8 py-4 px-10 text-2xl w-full">🎲 {{ t('draw_lottery') }}</button>
                 </div>
-                <div v-if="matchStep === 'lottery'" class="space-y-6">
-                    <div v-for="(team, idx) in lotteryResult" :key="team.id" class="p-5 bg-white border-r-8 border-blue-600 rounded-2xl text-right font-black text-xl">
+                <div v-if="matchStep === 'lottery'" class="space-y-6 max-w-2xl mx-auto">
+                    <div v-for="(team, idx) in lotteryResult" :key="team.id" class="p-5 bg-white border-r-8 border-blue-600 rounded-2xl text-right font-black text-xl shadow">
                         <span class="text-blue-600 ml-4">#{{ idx+1 }}</span> {{ team.team_name }}
                     </div>
-                    <button @click="startMatchLive" class="btn-emerald bg-emerald-600 text-3xl py-6 px-12 mt-8 animate-pulse">🔥 {{ t('launch_match') }} 🔥</button>
+                    <button @click="startMatchLive" class="btn-emerald bg-emerald-600 text-3xl py-6 px-12 w-full mt-8 animate-pulse shadow-xl hover:bg-emerald-500">🔥 {{ t('launch_match') }} 🔥</button>
                 </div>
             </div>
         </div>
@@ -259,62 +263,73 @@
 
     <!-- واجهة المسابقة المباشرة -->
     <div v-if="view === 'active_match'" class="fixed inset-0 match-bg p-4 z-[100] flex flex-col overflow-auto">
-        <div class="flex justify-between items-center bg-black/40 p-4 rounded-3xl mb-6">
-            <button @click="forceExitMatch" class="bg-red-700 px-6 py-2 rounded-2xl text-sm font-black shadow-lg">❌ {{ t('end_round') }}</button>
+        <div class="flex justify-between items-center bg-black/40 p-4 rounded-3xl mb-6 shadow-md backdrop-blur-sm border border-white/10">
+            <button @click="forceExitMatch" class="bg-red-700 hover:bg-red-600 transition px-6 py-2 rounded-2xl text-sm font-black shadow-lg">❌ {{ t('end_round') }}</button>
             <div class="text-center">
                 <div class="text-blue-300 text-xs uppercase tracking-widest">{{ activeMatchRound }}</div>
-                <div class="text-4xl md:text-5xl font-black mt-1">{{ currentPlayingTeam?.team_name || t('team') }}</div>
+                <div class="text-4xl md:text-5xl font-black mt-1 text-white">{{ currentPlayingTeam?.team_name || t('team') }}</div>
             </div>
             <!-- تم إخفاء النقاط هنا للحفاظ على حماس المسابقة -->
-            <div class="text-5xl font-black text-emerald-400 opacity-0 select-none">0</div>
+            <div class="text-5xl font-black text-emerald-400 opacity-0 select-none pointer-events-none">0</div>
         </div>
 
         <!-- اختيار المجال -->
-        <div v-if="!currentQuestion && currentMatchSubStep === 'category'" class="flex-1 flex flex-col items-center justify-center text-center">
-            <h3 class="text-3xl font-black mb-12">{{ t('choose_category') }} ({{ t('question') }} {{ currentQNum }} / {{ activeMatchRound === 'كسر التعادل' ? 1 : 5 }})</h3>
+        <div v-if="!currentQuestion && currentMatchSubStep === 'category'" class="flex-1 flex flex-col items-center justify-center text-center animate-fade">
+            <h3 class="text-3xl font-black mb-12 text-slate-200">{{ t('choose_category') }} <span class="text-blue-400">({{ t('question') }} {{ currentQNum }}{{ activeMatchRound === 'كسر التعادل' ? '' : ' / 5' }})</span></h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
-                <div v-for="cat in roundsConfig[activeMatchRound]" :key="cat" @click="showNumbersGrid(cat)" class="card bg-slate-900/70 cursor-pointer border-2 border-slate-600 hover:border-blue-500 transition-all p-12 text-center rounded-3xl"><h4 class="text-3xl font-black">{{ cat }}</h4></div>
+                <div v-for="cat in roundsConfig[activeMatchRound]" :key="cat" @click="showNumbersGrid(cat)" class="card bg-slate-800/80 cursor-pointer border-2 border-slate-600 hover:border-blue-500 hover:bg-slate-700 transition-all p-12 text-center rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                    <h4 class="text-4xl font-black text-white drop-shadow-md">{{ cat }}</h4>
+                </div>
             </div>
         </div>
 
         <!-- شبكة الأرقام -->
-        <div v-if="!currentQuestion && currentMatchSubStep === 'grid'" class="flex-1 flex flex-col">
-            <div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold text-blue-300">{{ t('category') }}: {{ selectedCat }}</h3><button @click="currentMatchSubStep = 'category'" class="bg-slate-800 px-6 py-2 rounded-2xl">↩ {{ t('back_categories') }}</button></div>
-            <div class="grid grid-cols-5 md:grid-cols-10 gap-3 max-h-[70vh] overflow-auto p-2">
-                <button v-for="n in 50" :key="n" @click="pickQuestion(n)" :class="isQuestionUsed(n) ? 'used' : ''" class="q-grid-btn text-2xl p-4">{{ n }}</button>
+        <div v-if="!currentQuestion && currentMatchSubStep === 'grid'" class="flex-1 flex flex-col animate-fade">
+            <div class="flex justify-between items-center mb-6 max-w-5xl mx-auto w-full px-4">
+                <h3 class="text-3xl font-bold text-blue-300 drop-shadow-md">{{ t('category') }}: <span class="text-white">{{ selectedCat }}</span></h3>
+                <button @click="currentMatchSubStep = 'category'" class="bg-slate-700 hover:bg-slate-600 transition px-6 py-3 rounded-2xl font-bold shadow-lg border border-slate-500">↩ {{ t('back_categories') }}</button>
+            </div>
+            <div class="grid grid-cols-5 md:grid-cols-10 gap-3 max-w-5xl mx-auto w-full p-2 overflow-auto max-h-[70vh] pb-10">
+                <button v-for="n in 50" :key="n" @click="pickQuestion(n)" :class="isQuestionUsed(n) ? 'used' : ''" class="q-grid-btn text-2xl p-4 shadow-md">{{ n }}</button>
             </div>
         </div>
 
         <!-- عرض السؤال -->
-        <div v-if="currentQuestion" class="flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full">
-            <div class="relative mb-8"><svg width="120" height="120" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#334155" stroke-width="8"/><circle cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" :stroke-dasharray="283" :stroke-dashoffset="timerOffset"/></svg><div class="absolute inset-0 flex items-center justify-center text-5xl font-black" :class="timer <= 10 ? 'text-red-500 animate-pulse' : ''">{{ timer }}</div></div>
-            <h3 class="text-3xl md:text-5xl font-black text-center mb-12 leading-relaxed">{{ currentQuestion.question_text }}</h3>
+        <div v-if="currentQuestion" class="flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full px-4 animate-fade">
+            <div class="relative mb-8 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" :stroke-dasharray="283" :stroke-dashoffset="timerOffset" class="transition-all duration-1000 linear"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center text-5xl font-black" :class="timer <= 10 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'text-white'">{{ timer }}</div>
+            </div>
+            <h3 class="text-3xl md:text-5xl font-black text-center mb-12 leading-relaxed text-slate-50 drop-shadow-lg">{{ currentQuestion.question_text }}</h3>
             
-            <div v-if="showOptions && currentQuestion.options && currentQuestion.options.length" class="grid grid-cols-2 gap-6 w-full mb-12">
-                <div v-for="(opt, idx) in currentQuestion.options" :key="idx" @click="handleOptionClick(opt, idx)" :id="'opt-'+idx" class="opt-btn text-2xl p-6 flex items-center justify-center gap-4">
-                    <span class="bg-blue-700 w-12 h-12 rounded-full flex items-center justify-center font-black">{{ idx+1 }}</span> {{ opt }}
+            <div v-if="showOptions && currentQuestion.options && currentQuestion.options.length" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12 animate-fade">
+                <div v-for="(opt, idx) in currentQuestion.options" :key="idx" @click="handleOptionClick(opt, idx)" :id="'opt-'+idx" class="opt-btn text-2xl p-6 flex items-center justify-center gap-4 shadow-lg hover:bg-slate-700">
+                    <span class="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center font-black shadow-inner">{{ idx+1 }}</span> <span class="flex-1 text-center">{{ opt }}</span>
                 </div>
             </div>
             
-            <div v-if="showAnswerText" class="bg-emerald-800/80 p-8 rounded-3xl text-4xl font-bold text-emerald-200 mb-10 text-center w-full border-2 border-emerald-500">
-                {{ t('correct_answer') }}: {{ currentQuestion.correct_answer }}
+            <div v-if="showAnswerText" class="bg-emerald-900/90 p-8 rounded-3xl text-3xl md:text-4xl font-bold text-emerald-100 mb-10 text-center w-full border-4 border-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.4)] animate-fade">
+                {{ t('correct_answer') }}: <span class="text-white">{{ currentQuestion.correct_answer }}</span>
             </div>
             
-            <div class="flex gap-6 w-full max-w-3xl mt-4" v-if="!showAnswerText && !showOptions">
-                <button @click="revealAnswerOnly" class="bg-blue-600 p-6 rounded-2xl flex-1 text-2xl font-black">👁️ {{ t('show_answer') }}</button>
-                <button v-if="activeMatchRound !== 'كسر التعادل'" @click="showOptions = true; if(currentQuestion.options?.length) playBeep(500);" class="bg-slate-700 p-6 rounded-2xl flex-1 text-2xl font-black">🔽 {{ t('show_options') }}</button>
+            <div class="flex flex-col md:flex-row gap-6 w-full max-w-3xl mt-4" v-if="!showAnswerText && !showOptions">
+                <button @click="revealAnswerOnly(false)" class="bg-blue-600 hover:bg-blue-500 p-6 rounded-2xl flex-1 text-2xl font-black shadow-lg transition border border-blue-400">👁️ {{ t('show_answer') }}</button>
+                <button v-if="activeMatchRound !== 'كسر التعادل'" @click="showOptions = true; if(currentQuestion.options?.length) AudioSys.play(500, 'sine', 0.1);" class="bg-slate-700 hover:bg-slate-600 p-6 rounded-2xl flex-1 text-2xl font-black shadow-lg transition border border-slate-500">🔽 {{ t('show_options') }}</button>
             </div>
             
             <!-- أزرار التحكيم تتغير حسب المرحلة (عادية أم كسر تعادل) -->
-            <div v-if="showAnswerText && !autoScoring" class="grid grid-cols-2 gap-6 w-full max-w-3xl mt-6">
+            <div v-if="showAnswerText && !autoScoring" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl mt-6 animate-fade">
                 <template v-if="activeMatchRound === 'كسر التعادل'">
-                    <button @click="scoreQuestion(1)" class="bg-green-600 p-6 rounded-3xl text-3xl font-black">✅ {{ t('correct') }} (+1)</button>
-                    <button @click="scoreQuestion(-1)" class="bg-red-600 p-6 rounded-3xl text-3xl font-black">❌ {{ t('wrong') }} (-1)</button>
-                    <button @click="scoreQuestion(0)" class="col-span-2 bg-slate-600 p-6 rounded-3xl text-3xl font-black">⏱️ {{ t('timeout_no_answer') }} (0)</button>
+                    <button @click="scoreQuestion(1)" class="bg-green-600 hover:bg-green-500 p-6 rounded-3xl text-3xl font-black shadow-lg border-b-4 border-green-800 transition">✅ {{ t('correct') }} <span class="text-xl opacity-75">(+1)</span></button>
+                    <button @click="scoreQuestion(-1)" class="bg-red-600 hover:bg-red-500 p-6 rounded-3xl text-3xl font-black shadow-lg border-b-4 border-red-800 transition">❌ {{ t('wrong') }} <span class="text-xl opacity-75">(-1)</span></button>
+                    <button @click="scoreQuestion(0)" class="md:col-span-2 bg-slate-600 hover:bg-slate-500 p-6 rounded-3xl text-3xl font-black shadow-lg border-b-4 border-slate-800 transition">⏱️ {{ t('timeout_no_answer') }} <span class="text-xl opacity-75">(0)</span></button>
                 </template>
                 <template v-else>
-                    <button @click="scoreQuestion(showOptions ? 1 : 3)" class="bg-green-600 p-8 rounded-3xl text-3xl font-black">✅ {{ t('correct') }} (+{{ showOptions ? 1 : 3 }})</button>
-                    <button @click="scoreQuestion(0)" class="bg-red-600 p-8 rounded-3xl text-3xl font-black">❌ {{ t('wrong') }} (0)</button>
+                    <button @click="scoreQuestion(showOptions ? 1 : 3)" class="bg-green-600 hover:bg-green-500 p-8 rounded-3xl text-3xl font-black shadow-[0_10px_0_rgba(21,128,61,1)] transition active:translate-y-2 active:shadow-none">✅ {{ t('correct') }} <span class="text-2xl opacity-80">(+{{ showOptions ? 1 : 3 }})</span></button>
+                    <button @click="scoreQuestion(0)" class="bg-red-600 hover:bg-red-500 p-8 rounded-3xl text-3xl font-black shadow-[0_10px_0_rgba(185,28,28,1)] transition active:translate-y-2 active:shadow-none">❌ {{ t('wrong') }} <span class="text-2xl opacity-80">(0)</span></button>
                 </template>
             </div>
         </div>
@@ -326,52 +341,52 @@
         <!-- العداد التنازلي الحماسي -->
         <div v-if="resultTimer > 0" class="text-center flex flex-col items-center justify-center h-full w-full">
             <h2 class="text-4xl md:text-6xl font-black mb-12 text-blue-300 drop-shadow-lg">{{ t('round_results') }} - {{ activeMatchRound }}</h2>
-            <div class="text-[180px] md:text-[250px] font-black text-emerald-400 drop-shadow-[0_0_40px_rgba(52,211,153,0.8)] animate-ping-slow">{{ resultTimer }}</div>
+            <div class="text-[180px] md:text-[250px] font-black text-emerald-400 drop-shadow-[0_0_50px_rgba(52,211,153,0.8)] animate-ping-slow leading-none">{{ resultTimer }}</div>
         </div>
 
         <!-- الترتيب والفرق المتأهلة -->
-        <div v-else class="w-full max-w-5xl bg-slate-900/90 p-8 rounded-3xl border-2 border-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.3)] animate-fade my-auto">
-            <h2 class="text-4xl font-black text-center text-blue-300 mb-10">🏆 {{ t('round_results') }} - {{ activeMatchRound }}</h2>
+        <div v-else class="w-full max-w-5xl bg-slate-900/95 p-8 md:p-12 rounded-3xl border-2 border-blue-500 shadow-[0_0_60px_rgba(59,130,246,0.3)] animate-fade my-auto backdrop-blur-md">
+            <h2 class="text-4xl md:text-5xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-emerald-300 mb-12 drop-shadow-md">🏆 {{ t('round_results') }} - {{ activeMatchRound }}</h2>
             
-            <div class="space-y-4 mb-10 max-h-[50vh] overflow-y-auto pr-2">
+            <div class="space-y-4 mb-12 max-h-[50vh] overflow-y-auto pr-2 custom-scroll">
                 <div v-for="(team, idx) in sortedTeams" :key="team.id" 
-                     class="flex justify-between items-center p-5 rounded-2xl border-2 font-bold text-xl transition-all"
-                     :class="idx < qualifyingCount ? 'bg-emerald-900/40 border-emerald-500 text-emerald-50' : 'bg-red-900/20 border-red-800/40 text-slate-400'">
+                     class="flex justify-between items-center p-6 rounded-2xl border-2 font-bold text-xl md:text-2xl transition-all shadow-lg"
+                     :class="idx < qualifyingCount ? 'bg-emerald-900/50 border-emerald-500 text-emerald-50 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'bg-red-900/30 border-red-800/50 text-slate-400'">
                     <div class="flex items-center gap-6">
-                        <span class="text-3xl w-8 text-center" :class="idx===0 ? 'text-yellow-400' : ''">{{ idx + 1 }}</span>
-                        <span class="text-2xl">{{ team.team_name }}</span>
+                        <span class="text-4xl w-10 text-center font-black" :class="idx===0 ? 'text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]' : 'text-slate-500'">{{ idx + 1 }}</span>
+                        <span>{{ team.team_name }}</span>
                     </div>
                     <div class="flex items-center gap-8">
-                        <span class="text-4xl font-black text-blue-300">{{ team.final_score }}</span>
-                        <span class="text-sm px-4 py-2 rounded-full whitespace-nowrap" :class="idx < qualifyingCount ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.8)]' : 'bg-red-900/50'">
+                        <span class="text-5xl font-black" :class="idx < qualifyingCount ? 'text-emerald-400' : 'text-slate-500'">{{ team.final_score }}</span>
+                        <span class="text-sm md:text-base px-6 py-2 rounded-full whitespace-nowrap tracking-wider font-black" :class="idx < qualifyingCount ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.8)]' : 'bg-red-900/80 text-red-200'">
                             {{ idx < qualifyingCount ? t('qualified') : t('out') }}
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col md:flex-row items-center justify-between bg-slate-800 p-6 rounded-2xl gap-6 border border-slate-600">
-                <div class="flex items-center gap-4 w-full md:w-auto">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-slate-800/80 p-6 rounded-2xl gap-6 border border-slate-600 shadow-inner">
+                <div class="flex items-center gap-4 w-full md:w-auto bg-slate-900 p-3 rounded-xl border border-slate-700">
                     <label class="font-black text-lg text-slate-300">{{ t('qualifying_count') }}</label>
-                    <input type="number" v-model="qualifyingCount" min="1" :max="sortedTeams.length" class="input-field text-black w-24 text-center text-2xl py-1">
+                    <input type="number" v-model="qualifyingCount" min="1" :max="sortedTeams.length" class="input-field text-black w-24 text-center text-3xl py-1 font-black bg-slate-100 focus:bg-white border-none">
                 </div>
                 
                 <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                     <!-- تحذير التعادل وزر كسر التعادل -->
                     <template v-if="hasTieBreaker">
-                        <div class="bg-red-900/50 p-4 rounded-xl border border-red-500 animate-pulse text-center w-full md:w-auto">
-                            <p class="text-white font-bold mb-2">{{ t('tie_warning') }}</p>
-                            <button @click="startTieBreaker" class="btn-emerald bg-red-600 border-red-400 border-2 w-full text-xl hover:bg-red-500 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                        <div class="bg-red-900/60 p-5 rounded-2xl border-2 border-red-500 animate-pulse text-center w-full md:w-auto shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                            <p class="text-white font-black mb-3 text-lg">{{ t('tie_warning') }}</p>
+                            <button @click="startTieBreaker" class="btn-emerald bg-red-600 hover:bg-red-500 border-red-400 border-2 w-full text-2xl py-3 shadow-[0_0_20px_rgba(220,38,38,0.6)]">
                                 {{ t('tie_breaker_btn') }}
                             </button>
                         </div>
                     </template>
                     <!-- الأزرار العادية لإنهاء المرحلة أو المتابعة -->
                     <template v-else>
-                        <button @click="saveQualifiersAndEnd" class="btn-emerald bg-slate-600 border-slate-400 border-2 w-full md:w-auto text-xl px-8 py-4 hover:bg-slate-500 transition">
+                        <button @click="saveQualifiersAndEnd" class="btn-emerald bg-slate-600 hover:bg-slate-500 border-slate-400 border-2 w-full md:w-auto text-xl px-8 py-4 transition shadow-lg">
                             {{ t('save_end_today') }} 💾
                         </button>
-                        <button @click="startNextRoundLive" class="btn-emerald bg-blue-600 border-blue-400 border-2 w-full md:w-auto text-xl px-8 py-4 shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:bg-blue-500 transition">
+                        <button @click="startNextRoundLive" class="btn-emerald bg-blue-600 hover:bg-blue-500 border-blue-400 border-2 w-full md:w-auto text-2xl px-10 py-4 shadow-[0_0_30px_rgba(37,99,235,0.6)] transition">
                             {{ t('start_next_round') }} 🚀
                         </button>
                     </template>
@@ -380,9 +395,9 @@
         </div>
     </div>
 
-    <!-- التذييل المعدل والاحترافي -->
-    <footer class="footer text-white text-center py-6 mt-10">
-        <p class="font-black tracking-widest text-lg md:text-xl">Développé par UNEM ISCAE (MDA)</p>
+    <!-- التذييل -->
+    <footer class="footer text-white text-center py-6 mt-10 relative z-10">
+        <p class="font-black tracking-widest text-lg md:text-xl text-emerald-100/70 drop-shadow-md">Développé par UNEM ISCAE (MDA)</p>
     </footer>
 </div>
 
@@ -391,7 +406,67 @@
     const SUPABASE_URL = "https://mcdecprparorhdzuyutk.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jZGVjcHJwYXJvcmhkenV5dXRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDUxMDgsImV4cCI6MjA4OTUyMTEwOH0.o4DIPSeedAL3GYEBbZzkg-QU90rrkmODxFVauxttiMs";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const playBeep = (freq=800, dur=0.1) => { try { const ctx = new (AudioContext || webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = "sine"; osc.frequency.value = freq; gain.gain.value = 0.15; osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + dur); } catch(e){} };
+    
+    // نظام الصوت المتقدم والمتكامل (برمجياً عبر AudioContext)
+    const AudioSys = {
+        ctx: null,
+        init() { 
+            if(!this.ctx) { 
+                const AudioContext = window.AudioContext || window.webkitAudioContext; 
+                this.ctx = new AudioContext(); 
+            } 
+            if(this.ctx.state === 'suspended') this.ctx.resume(); 
+        },
+        play(freq, type='sine', dur=0.1, vol=0.1) {
+            try {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + dur);
+            } catch(e) {}
+        },
+        tickNormal() { this.play(600, 'sine', 0.05, 0.05); },
+        tickUrgent() { this.play(900, 'square', 0.08, 0.08); },
+        timeUp() {
+            try {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 1.5);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 1.5);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 1.5);
+            } catch(e) {}
+        },
+        correct() {
+            setTimeout(() => this.play(523.25, 'sine', 0.15, 0.1), 0);
+            setTimeout(() => this.play(659.25, 'sine', 0.15, 0.1), 150);
+            setTimeout(() => this.play(783.99, 'sine', 0.15, 0.1), 300);
+            setTimeout(() => this.play(1046.50, 'sine', 0.4, 0.15), 450);
+        },
+        wrong() {
+            this.play(150, 'sawtooth', 0.5, 0.2);
+        },
+        fanfare() {
+            setTimeout(() => this.play(440, 'square', 0.15, 0.1), 0);
+            setTimeout(() => this.play(440, 'square', 0.15, 0.1), 150);
+            setTimeout(() => this.play(440, 'square', 0.15, 0.1), 300);
+            setTimeout(() => this.play(587.33, 'square', 0.4, 0.15), 450);
+            setTimeout(() => this.play(880, 'square', 0.8, 0.2), 900);
+        }
+    };
 
     createApp({
         setup() {
@@ -399,7 +474,6 @@
             const view = ref('home');
             const adminTab = ref('teams');
             const isAdmin = ref(false);
-            const showWelcome = ref(true); 
             let adminClickCount = 0;
             const competitions = ref([]);
             const allTeams = ref([]);
@@ -413,7 +487,6 @@
             const selectedTrackRound = ref('المرحلة الأولى');
             const newCatName = ref('');
             
-            // متغيرات اختيار وتمديد المسابقة
             const activeMatchCompId = ref(null);
             const editingCompId = ref(null);
             const newEndDate = ref('');
@@ -452,12 +525,12 @@
                     welcome_title: "أهلاً بك في منصة مسابقات UNEM ISCAE",
                     welcome_desc: "استعد لتجربة تنافسية فريدة مليئة بالحماس والمعرفة. اكتشف إمكانياتك، نافس أقوى الفرق، وكن أنت البطل",
                     start_now: "ابدأ الآن",
-                    back: "عودة", admin: "المشرف", welcome_msg: "منصة المسابقات الثقافية والرياضية", show_competitions: "استعراض المسابقات",
-                    open_competitions: "المسابقات المفتوحة", reg_until: "ينتهي التسجيل في", register_team: "سجل فريقك الآن",
+                    back: "عودة", admin: "المشرف", welcome_msg: "منصة المسابقات الثقافية والرياضية الكبرى", show_competitions: "استعراض المسابقات المتاحة",
+                    open_competitions: "المسابقات المفتوحة للتسجيل", reg_until: "ينتهي التسجيل في", register_team: "سجل فريقك الآن",
                     team_data: "بيانات الفريق والأعضاء", team_name_placeholder: "اسم الفريق", whatsapp_placeholder: "رقم الواتساب",
-                    member_name_placeholder: "الاسم الكامل للعضو", reg_no_placeholder: "رقم التسجيل", next: "متابعة", upload_docs: "رفع الصور المطلوبة",
+                    member_name_placeholder: "الاسم الكامل للعضو", reg_no_placeholder: "رقم التسجيل الجامعي", next: "متابعة", upload_docs: "رفع الصور المطلوبة",
                     uploaded: "تم الرفع", previous: "السابق", next_payment: "التالي للدفع", payment_confirmation: "تأكيد الدفع والرسوم",
-                    select_bank: "اختر البنك", amount: "المبلغ", submit_final: "إرسال الطلب النهائي", teams: "المشاركات",
+                    select_bank: "اختر الحساب البنكي", amount: "المبلغ المطلوب", submit_final: "إرسال الطلب النهائي", teams: "المشاركات",
                     competitions: "المسابقات", tracks: "المسارات", questions_bank: "بنك الأسئلة", start_match: "بدء المسابقة",
                     new_competition: "مسابقة جديدة", team: "الفريق", members: "الأعضاء", payment_proof: "وصل الدفع", status: "الحالة",
                     view_receipt: "عرض الوصل", accept: "قبول", reject: "رفض", accepted: "مقبول", new_category: "مجال جديد", add: "إضافة",
@@ -469,11 +542,12 @@
                     end_round: "إنهاء المسابقة", choose_category: "اختر المجال للإجابة", question: "السؤال", category: "المجال",
                     back_categories: "العودة للمجالات", correct_answer: "الإجابة الصحيحة", show_answer: "إظهار الإجابة الصحيحة",
                     show_options: "إظهار الخيارات", correct: "إجابة صحيحة", wrong: "إجابة خاطئة",
-                    round_results: "نتائج المرحلة", qualified_teams: "الفرق المتأهلة", qualifying_count: "عدد المتأهلين:", 
+                    round_results: "نتائج المرحلة النهائية", qualified_teams: "الفرق المتأهلة", qualifying_count: "عدد المتأهلين:", 
                     start_next_round: "بدء المرحلة التالية", qualified: "متأهل 🎉", out: "حظ أوفر",
                     save_end_today: "حفظ المتأهلين وإنهاء لليوم", eliminated_status: "مقصي", register_as_admin: "تسجيل فريق (المشرف)",
-                    timeout_no_answer: "نفد الوقت / لا إجابة", tie_warning: "⚠️ يوجد تعادل على خط التأهل!", tie_breaker_btn: "بدء كسر التعادل ⚔️",
-                    select_competition: "اختر المسابقة المعنية", extend_reg: "تجديد مدة التسجيل", save: "حفظ التجديد"
+                    timeout_no_answer: "نفد الوقت / لا إجابة", tie_warning: "⚠️ يوجد تعادل على خط التأهل!", tie_breaker_btn: "بدء جولة كسر التعادل ⚔️",
+                    select_competition: "اختر المسابقة المعنية", extend_reg: "تجديد مدة التسجيل", save: "حفظ التجديد",
+                    tie_not_broken: "لم يتم كسر التعادل! سيتم طرح سؤال إضافي لكل فريق."
                 },
                 fr: {
                     welcome_title: "Bienvenue sur la plateforme UNEM ISCAE",
@@ -502,10 +576,26 @@
                     start_next_round: "Démarrer le tour suivant", qualified: "Qualifié 🎉", out: "Éliminé",
                     save_end_today: "Enregistrer et terminer pour aujourd'hui", eliminated_status: "Éliminé", register_as_admin: "Inscrire une équipe (Admin)",
                     timeout_no_answer: "Temps écoulé / Pas de réponse", tie_warning: "⚠️ Égalité sur la ligne de qualification!", tie_breaker_btn: "Démarrer le bris d'égalité ⚔️",
-                    select_competition: "Sélectionnez la compétition", extend_reg: "Renouveler", save: "Enregistrer"
+                    select_competition: "Sélectionnez la compétition", extend_reg: "Renouveler", save: "Enregistrer",
+                    tie_not_broken: "Égalité non rompue! Une autre question sera posée à chaque équipe."
                 }
             };
             const t = (key) => translations[lang.value][key] || key;
+
+            const enterFullscreen = () => {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) { elem.requestFullscreen().catch(e=>{}); }
+                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen().catch(e=>{}); }
+                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen().catch(e=>{}); }
+            };
+
+            const exitFullscreen = () => {
+                if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                    if (document.exitFullscreen) { document.exitFullscreen(); }
+                    else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+                    else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+                }
+            };
 
             const toggleLang = () => { lang.value = lang.value === 'ar' ? 'fr' : 'ar'; };
             const formatDate = (d) => d ? new Date(d).toLocaleString(lang.value === 'ar' ? 'ar-EG' : 'fr-FR', { day:'numeric', month:'short', hour:'numeric', minute:'numeric' }) : '';
@@ -531,7 +621,6 @@
             const saveCompetition = async () => { await supabaseClient.from('competitions').insert([newComp.value]); alert(t('save_publish')); adminTab.value='manage_comp'; loadCompetitions(); };
             const deleteCompetition = async (id) => { if(confirm(t('delete'))) { await supabaseClient.from('competitions').delete().eq('id',id); loadCompetitions(); } };
             
-            // دوال تمديد التسجيل
             const startEditingDate = (comp) => {
                 editingCompId.value = comp.id;
                 newEndDate.value = comp.end_date ? comp.end_date.slice(0, 16) : '';
@@ -543,7 +632,6 @@
                 loadCompetitions();
             };
 
-            // إرسال رسالة واتساب رسمية واحترافية عند القبول
             const updateTeamStatus = async (team, status) => { 
                 await supabaseClient.from('teams').update({ status }).eq('id', team.id); 
                 if(status==='accepted') {
@@ -555,7 +643,6 @@
             
             const processBulkQuestions = async () => { const lines = bulkInput.value.split('\n').filter(l=>l.includes('|')); const qs = lines.map(l=>{ const[q,c,a,o] = l.split('|'); return { question_text: q.trim(), category: c.trim(), correct_answer: a.trim(), has_options: !!o, options: o ? o.split(',').map(x=>x.trim()) : null, round: targetRound.value, is_used: false }; }); if(qs.length) await supabaseClient.from('questions').insert(qs); alert(`${t('import_questions')} ${qs.length}`); bulkInput.value=''; getQuestionCount(); };
             
-            // اختيار الفرق بناءً على المسابقة المحددة
             const prepareAttendance = () => { 
                 const acceptedTeams = allTeams.value.filter(t => t.status === 'accepted' && t.competition_id === activeMatchCompId.value);
                 if (acceptedTeams.length === 0) {
@@ -586,6 +673,8 @@
                 currentMatchSubStep.value = 'category'; 
                 currentQuestion.value = null; 
                 if(timerIntervalId) clearInterval(timerIntervalId);
+
+                enterFullscreen();
             };
 
             const showNumbersGrid = (cat) => { selectedCat.value = cat; currentMatchSubStep.value = 'grid'; };
@@ -594,21 +683,57 @@
             const baseTimer = computed(() => activeMatchRound.value === 'كسر التعادل' ? 45 : 60);
             
             const stopTimer = () => { if(timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; } };
+            
             const startTimer = () => { 
                 stopTimer(); 
                 timer.value = baseTimer.value; 
                 timerIntervalId = setInterval(() => { 
                     if(timer.value > 0) { 
                         timer.value--; 
-                        if(timer.value===10) playBeep(600,0.08); 
+                        if(timer.value <= 10 && timer.value > 0) {
+                            AudioSys.tickUrgent();
+                        } else if(timer.value > 10) {
+                            AudioSys.tickNormal();
+                        }
                     } else { 
                         stopTimer(); 
-                        revealAnswerOnly(); 
+                        AudioSys.timeUp();
+                        revealAnswerOnly(true); 
                     } 
                 }, 1000); 
             };
-            const revealAnswerOnly = () => { stopTimer(); showAnswerText.value = true; showOptions.value = false; playBeep(300,0.3); };
-            const pickQuestion = async (num) => { if(isQuestionUsed(num)) return; const { data, error } = await supabaseClient.from('questions').select('*').eq('round', activeMatchRound.value).eq('category', selectedCat.value).eq('is_used', false).limit(1); if(!data || data.length===0) { alert(t('no_questions')); return; } const q = data[0]; currentQuestion.value = q; usedQs.value.add(`${selectedCat.value}-${num}`); usedQuestionIds.value.add(q.id); await supabaseClient.from('questions').update({ is_used: true }).eq('id', q.id); showOptions.value = false; showAnswerText.value = false; startTimer(); };
+
+            const revealAnswerOnly = (isTimeUp = false) => { 
+                stopTimer(); 
+                showAnswerText.value = true; 
+                showOptions.value = false; 
+                if(!isTimeUp) {
+                    AudioSys.play(400, 'sine', 0.2); 
+                }
+            };
+            
+            const pickQuestion = async (num) => { 
+                if(isQuestionUsed(num)) return; 
+                const { data, error } = await supabaseClient.from('questions').select('*').eq('round', activeMatchRound.value).eq('category', selectedCat.value).eq('is_used', false).limit(1); 
+                if(!data || data.length===0) { alert(t('no_questions')); return; } 
+                const q = data[0]; 
+
+                if (q.options && q.options.length > 0) {
+                    let shuffled =[...q.options];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));[shuffled[i], shuffled[j]] =[shuffled[j], shuffled[i]];
+                    }
+                    q.options = shuffled;
+                }
+
+                currentQuestion.value = q; 
+                usedQs.value.add(`${selectedCat.value}-${num}`); 
+                usedQuestionIds.value.add(q.id); 
+                await supabaseClient.from('questions').update({ is_used: true }).eq('id', q.id); 
+                showOptions.value = false; 
+                showAnswerText.value = false; 
+                startTimer(); 
+            };
             
             const handleOptionClick = async (opt, idx) => { 
                 if(!currentQuestion.value || showAnswerText.value) return; 
@@ -618,12 +743,12 @@
                 
                 if(isCorrect) { 
                     if(el) el.classList.add('correct'); 
-                    playBeep(880,0.15); 
+                    AudioSys.correct(); 
                     showAnswerText.value = true;
                     setTimeout(() => scoreQuestion(1), 2500); 
                 } else { 
                     if(el) el.classList.add('wrong'); 
-                    playBeep(150,0.3); 
+                    AudioSys.wrong(); 
                     stopTimer(); 
                     showAnswerText.value = true; 
                     setTimeout(() => scoreQuestion(0), 3000); 
@@ -631,7 +756,7 @@
             };
             
             const sortedTeams = computed(() => {
-                return [...lotteryResult.value].sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
+                return[...lotteryResult.value].sort((a, b) => (b.final_score || 0) - (a.final_score || 0));
             });
 
             const hasTieBreaker = computed(() => {
@@ -675,10 +800,10 @@
                 const rIntv = setInterval(() => {
                     if(resultTimer.value > 0) {
                         resultTimer.value--;
-                        playBeep(400, 0.05);
+                        AudioSys.tickUrgent();
                     } else {
                         clearInterval(rIntv);
-                        playBeep(1200, 0.4);
+                        AudioSys.fanfare();
                     }
                 }, 1000);
             };
@@ -697,6 +822,7 @@
                 view.value = 'admin';
                 matchStep.value = 'setup';
                 loadTeams();
+                exitFullscreen();
             };
 
             const startNextRoundLive = async () => {
@@ -734,6 +860,7 @@
                     view.value = 'admin';
                     matchStep.value = 'setup';
                     loadTeams();
+                    exitFullscreen();
                 }
             };
 
@@ -755,26 +882,38 @@
                 showAnswerText.value = false; 
                 showOptions.value = false; 
                 
-                const maxQ = activeMatchRound.value === 'كسر التعادل' ? 1 : 5;
-                
                 if(currentPlayingTeamIdx.value + 1 < matchQueue.value.length) { 
                     currentPlayingTeamIdx.value++; 
                     activeTeamScore.value = matchQueue.value[currentPlayingTeamIdx.value].final_score || 0; 
                     currentMatchSubStep.value = 'category'; 
                 } else { 
-                    if(currentQNum.value < maxQ) { 
-                        currentQNum.value++; 
-                        currentPlayingTeamIdx.value = 0; 
-                        activeTeamScore.value = matchQueue.value[0].final_score || 0; 
-                        currentMatchSubStep.value = 'category'; 
-                    } else { 
-                        showRoundResults(); 
-                    } 
+                    if (activeMatchRound.value === 'كسر التعادل') {
+                        const uniqueScores = new Set(matchQueue.value.map(t => t.final_score));
+                        if (uniqueScores.size === 1) {
+                            alert(t('tie_not_broken'));
+                            currentQNum.value++; 
+                            currentPlayingTeamIdx.value = 0; 
+                            activeTeamScore.value = matchQueue.value[0].final_score || 0; 
+                            currentMatchSubStep.value = 'category'; 
+                        } else {
+                            showRoundResults(); 
+                        }
+                    } else {
+                        const maxQ = 5;
+                        if(currentQNum.value < maxQ) { 
+                            currentQNum.value++; 
+                            currentPlayingTeamIdx.value = 0; 
+                            activeTeamScore.value = matchQueue.value[0].final_score || 0; 
+                            currentMatchSubStep.value = 'category'; 
+                        } else { 
+                            showRoundResults(); 
+                        } 
+                    }
                 } 
                 isScoringProcess = false;
             };
 
-            const forceExitMatch = () => { stopTimer(); view.value='admin'; matchStep.value='setup'; currentQuestion.value=null; };
+            const forceExitMatch = () => { stopTimer(); view.value='admin'; matchStep.value='setup'; currentQuestion.value=null; exitFullscreen(); };
             const goBack = () => { if(view.value==='active_match' || view.value==='match_results') forceExitMatch(); else view.value='home'; };
             const addFileField = () => { if(tempFile.value) { newComp.value.required_files.push(tempFile.value); tempFile.value=''; } };
             const addBankField = () => { if(tempBank.value.name) { newComp.value.payment_methods.push({...tempBank.value}); tempBank.value={name:'',number:''}; } };
@@ -782,12 +921,12 @@
             const timerOffset = computed(() => 283 - (timer.value / baseTimer.value) * 283);
 
             return {
-                lang, view, adminTab, isAdmin, showWelcome, competitions, allTeams, selectedComp, regStep, regForm, isStep1Valid, isStep2Valid, isUploading, selectedBank, qCount, targetRound,
+                lang, view, adminTab, isAdmin, competitions, allTeams, selectedComp, regStep, regForm, isStep1Valid, isStep2Valid, isUploading, selectedBank, qCount, targetRound,
                 roundsConfig, selectedTrackRound, newCatName, addCategory, matchStep, activeMatchRound, lotteryResult, currentPlayingTeam, currentQNum, currentMatchSubStep,
                 selectedCat, timer, timerOffset, showOptions, showAnswerText, autoScoring, activeTeamScore, currentQuestion, acceptedTeamsWithAttendance, t, toggleLang,
                 loadCompetitions, openRegistration, handleFileUpload, handlePaymentProofUpload, submitRegistration, countAdminClicks, loadTeams, updateTeamStatus, formatDate,
                 saveCompetition, deleteCompetition, startEditingDate, saveNewEndDate, editingCompId, newEndDate, activeMatchCompId, processBulkQuestions, getQuestionCount, prepareAttendance, runMatchLottery, startMatchLive, showNumbersGrid, pickQuestion,
-                isQuestionUsed, revealAnswerOnly, handleOptionClick, scoreQuestion, forceExitMatch, goBack, addFileField, addBankField, newComp, tempFile, tempBank, bulkInput, playBeep,
+                isQuestionUsed, revealAnswerOnly, handleOptionClick, scoreQuestion, forceExitMatch, goBack, addFileField, addBankField, newComp, tempFile, tempBank, bulkInput, AudioSys,
                 resultTimer, qualifyingCount, sortedTeams, startNextRoundLive, saveQualifiersAndEnd, hasTieBreaker, startTieBreaker
             };
         }
