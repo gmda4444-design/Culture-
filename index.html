@@ -11,7 +11,6 @@
     <style>
         * { font-family: 'Cairo', sans-serif; }
         body { background: linear-gradient(145deg, #f1f5f9 0%, #e6edf4 100%); min-height: 100vh; }
-        /* تم إضافة !important لمنع كلاس flex من إظهار الرموز قبل تحميل Vue */
         [v-cloak] { display: none !important; }
         .btn-emerald { background: linear-gradient(105deg, #059669, #047857); color: white; padding: 0.8rem 1.5rem; border-radius: 1.2rem; font-weight: 800; transition: all 0.2s ease; cursor: pointer; border: none; box-shadow: 0 8px 14px -6px rgba(5,150,105,0.3); }
         .btn-emerald:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 20px -8px rgba(5,150,105,0.5); }
@@ -45,12 +44,16 @@
         }
         .animate-float { animation: float 4s ease-in-out infinite; }
         
+        /* تأثيرات الإشعارات (Toasts) */
+        .toast-enter-active, .toast-leave-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px) scale(0.9); }
+
         .rtl { direction: rtl; }
         .ltr { direction: ltr; }
     </style>
 </head>
 <body>
-<div id="app" v-cloak :class="lang === 'fr' ? 'ltr' : 'rtl'" class="flex flex-col min-h-screen">
+<div id="app" v-cloak :class="lang === 'fr' ? 'ltr' : 'rtl'" class="flex flex-col min-h-screen relative">
     
     <header class="bg-emerald-900 text-white p-4 shadow-xl flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-4">
@@ -79,15 +82,27 @@
         </div>
 
         <!-- قائمة المسابقات -->
-        <div v-if="view === 'competitions'" class="max-w-4xl mx-auto space-y-6 w-full">
+        <div v-if="view === 'competitions'" class="max-w-4xl mx-auto space-y-6 w-full animate-fade">
             <h2 class="text-3xl font-black text-center text-emerald-900 underline decoration-blue-500 decoration-4 mb-8">{{ t('open_competitions') }}</h2>
-            <div v-for="comp in competitions" :key="comp.id" class="card flex flex-col md:flex-row justify-between items-center border-r-8 border-emerald-600 hover:shadow-2xl transition">
-                <div>
-                    <h3 class="text-2xl font-black text-emerald-900">{{ comp.name_ar }}</h3>
-                    <p class="text-slate-500 text-xs font-bold mt-1">📅 {{ t('reg_until') }} {{ formatDate(comp.end_date) }}</p>
-                </div>
-                <button @click="openRegistration(comp)" class="btn-emerald md:w-auto px-12 mt-4 md:mt-0">{{ t('register_team') }} ➕</button>
+            
+            <!-- حالة عدم وجود مسابقات -->
+            <div v-if="competitions.length === 0" class="card flex flex-col items-center justify-center text-center p-12 border-t-8 border-blue-400 shadow-xl bg-white/90">
+                <div class="text-7xl mb-6 animate-float drop-shadow-md">⏳</div>
+                <h3 class="text-3xl font-black text-slate-800 mb-3">{{ t('no_competitions_title') }}</h3>
+                <p class="text-lg text-slate-500 font-bold max-w-md">{{ t('no_competitions_desc') }}</p>
+                <button @click="view = 'home'" class="mt-8 bg-blue-100 hover:bg-blue-200 text-blue-800 px-8 py-3 rounded-2xl font-black transition shadow-sm border border-blue-200">{{ t('back_home') }}</button>
             </div>
+
+            <!-- حالة وجود مسابقات -->
+            <template v-else>
+                <div v-for="comp in competitions" :key="comp.id" class="card flex flex-col md:flex-row justify-between items-center border-r-8 border-emerald-600 hover:shadow-2xl transition">
+                    <div>
+                        <h3 class="text-2xl font-black text-emerald-900">{{ comp.name_ar }}</h3>
+                        <p class="text-slate-500 text-xs font-bold mt-1">📅 {{ t('reg_until') }} {{ formatDate(comp.end_date) }}</p>
+                    </div>
+                    <button @click="openRegistration(comp)" class="btn-emerald md:w-auto px-12 mt-4 md:mt-0">{{ t('register_team') }} ➕</button>
+                </div>
+            </template>
         </div>
 
         <!-- تسجيل الفريق -->
@@ -400,6 +415,19 @@
     <footer class="footer text-white text-center py-6 mt-10 relative z-10">
         <p class="font-black tracking-widest text-lg md:text-xl text-emerald-100/70 drop-shadow-md">Développé par UNEM ISCAE (MDA)</p>
     </footer>
+
+    <!-- الإشعارات المنبثقة (Toasts) -->
+    <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[300] flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4">
+        <transition-group name="toast">
+            <div v-for="toast in toasts" :key="toast.id" 
+                 class="px-6 py-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.3)] font-black text-white text-center text-sm md:text-base backdrop-blur-lg flex items-center justify-center gap-3 w-full"
+                 :class="toast.type === 'error' ? 'bg-red-600/95 border border-red-400' : 'bg-emerald-600/95 border border-emerald-400'">
+                <span class="text-xl">{{ toast.type === 'success' ? '✅' : '⚠️' }}</span>
+                <span>{{ toast.message }}</span>
+            </div>
+        </transition-group>
+    </div>
+
 </div>
 
 <script>
@@ -521,6 +549,17 @@
             const resultTimer = ref(15);
             const qualifyingCount = ref(2);
 
+            // نظام الإشعارات (Toasts)
+            const toasts = ref([]);
+            let toastId = 0;
+            const showToast = (message, type = 'success', duration = 3000) => {
+                const id = toastId++;
+                toasts.value.push({ id, message, type });
+                setTimeout(() => {
+                    toasts.value = toasts.value.filter(t => t.id !== id);
+                }, duration);
+            };
+
             const translations = {
                 ar: {
                     welcome_title: "أهلاً بك في منصة مسابقات UNEM ISCAE",
@@ -531,14 +570,14 @@
                     team_data: "بيانات الفريق والأعضاء", team_name_placeholder: "اسم الفريق", whatsapp_placeholder: "رقم الواتساب",
                     member_name_placeholder: "الاسم الكامل للعضو", reg_no_placeholder: "رقم التسجيل الجامعي", next: "متابعة", upload_docs: "رفع الصور المطلوبة",
                     uploaded: "تم الرفع", previous: "السابق", next_payment: "التالي للدفع", payment_confirmation: "تأكيد الدفع والرسوم",
-                    select_bank: "اختر الحساب البنكي", amount: "المبلغ المطلوب", submit_final: "إرسال الطلب النهائي", teams: "المشاركات",
+                    select_bank: "اختر الحساب البنكي", amount: "المبلغ المطلوب", submit_final: "تم إرسال طلبكم بنجاح", teams: "المشاركات",
                     competitions: "المسابقات", tracks: "المسارات", questions_bank: "بنك الأسئلة", start_match: "بدء المسابقة",
                     new_competition: "مسابقة جديدة", team: "الفريق", members: "الأعضاء", payment_proof: "وصل الدفع", status: "الحالة",
                     view_receipt: "عرض الوصل", accept: "قبول", reject: "رفض", accepted: "مقبول", new_category: "مجال جديد", add: "إضافة",
                     comp_name: "اسم المسابقة", fees: "الرسوم (MRU)", member_limit: "عدد الأعضاء", required_file: "ملف مطلوب",
-                    bank_name: "اسم البنك", account_number: "رقم الحساب", save_publish: "حفظ ونشر المسابقة", delete: "حذف",
+                    bank_name: "اسم البنك", account_number: "رقم الحساب", save_publish: "تم حفظ ونشر المسابقة", delete: "تأكيد الحذف؟",
                     total_questions: "إجمالي الأسئلة", refresh: "تحديث", bulk_placeholder: "سؤال|مجال|إجابة|خيار1,خيار2,خيار3",
-                    import_questions: "استيراد الأسئلة", prepare_attendance: "تأكيد حضور الفرق", confirm_attendance: "سجل حضور الفرق المعتمدة",
+                    import_questions: "تم استيراد الأسئلة بنجاح: ", prepare_attendance: "تأكيد حضور الفرق", confirm_attendance: "سجل حضور الفرق المعتمدة",
                     present: "حاضر", absent: "غائب", draw_lottery: "إجراء القرعة العشوائية", points: "نقاط", launch_match: "انطلاق التحدي المباشر",
                     end_round: "إنهاء المسابقة", choose_category: "اختر المجال للإجابة", question: "السؤال", category: "المجال",
                     back_categories: "العودة للمجالات", correct_answer: "الإجابة الصحيحة", show_answer: "إظهار الإجابة الصحيحة",
@@ -547,8 +586,13 @@
                     start_next_round: "بدء المرحلة التالية", qualified: "متأهل 🎉", out: "حظ أوفر",
                     save_end_today: "حفظ المتأهلين وإنهاء لليوم", eliminated_status: "مقصي", register_as_admin: "تسجيل فريق (المشرف)",
                     timeout_no_answer: "نفد الوقت / لا إجابة", tie_warning: "⚠️ يوجد تعادل على خط التأهل!", tie_breaker_btn: "بدء جولة كسر التعادل ⚔️",
-                    select_competition: "اختر المسابقة المعنية", extend_reg: "تجديد مدة التسجيل", save: "حفظ التجديد",
-                    tie_not_broken: "لم يتم كسر التعادل! سيتم طرح سؤال إضافي لكل فريق."
+                    select_competition: "اختر المسابقة المعنية", extend_reg: "تجديد مدة التسجيل", save: "تم الحفظ بنجاح",
+                    tie_not_broken: "لم يتم كسر التعادل! سيتم طرح سؤال إضافي لكل فريق.",
+                    no_competitions_title: "لا توجد مسابقات متاحة حالياً",
+                    no_competitions_desc: "يرجى العودة لاحقاً أو متابعة إعلاناتنا لمعرفة مواعيد المسابقات القادمة.",
+                    back_home: "العودة للرئيسية",
+                    no_questions: "لا توجد أسئلة متاحة في هذا المجال حالياً!",
+                    deleted_success: "تم الحذف بنجاح"
                 },
                 fr: {
                     welcome_title: "Bienvenue sur la plateforme UNEM ISCAE",
@@ -560,15 +604,15 @@
                     member_name_placeholder: "Nom complet du membre", reg_no_placeholder: "Numéro d'inscription", next: "Suivant",
                     upload_docs: "Télécharger les documents", uploaded: "Téléchargé", previous: "Précédent", next_payment: "Suivant paiement",
                     payment_confirmation: "Confirmation du paiement", select_bank: "Choisir la banque", amount: "Montant",
-                    submit_final: "Envoyer la demande", teams: "Équipes", competitions: "Compétitions", tracks: "Parcours",
+                    submit_final: "Demande envoyée avec succès", teams: "Équipes", competitions: "Compétitions", tracks: "Parcours",
                     questions_bank: "Banque de questions", start_match: "Démarrer le match", new_competition: "Nouvelle compétition",
                     team: "Équipe", members: "Membres", payment_proof: "Preuve de paiement", status: "Statut",
                     view_receipt: "Voir reçu", accept: "Accepter", reject: "Rejeter", accepted: "Accepté", new_category: "Nouvelle catégorie",
                     add: "Ajouter", comp_name: "Nom de la compétition", fees: "Frais (MRU)", member_limit: "Nombre de membres",
                     required_file: "Fichier requis", bank_name: "Nom de la banque", account_number: "Numéro de compte",
-                    save_publish: "Enregistrer et publier", delete: "Supprimer", total_questions: "Total des questions",
+                    save_publish: "Compétition enregistrée", delete: "Confirmer la suppression?", total_questions: "Total des questions",
                     refresh: "Actualiser", bulk_placeholder: "Question|Catégorie|Réponse|Option1,Option2,Option3",
-                    import_questions: "Importer les questions", prepare_attendance: "Confirmer la présence", confirm_attendance: "Enregistrer la présence des équipes",
+                    import_questions: "Questions importées: ", prepare_attendance: "Confirmer la présence", confirm_attendance: "Enregistrer la présence des équipes",
                     present: "Présent", absent: "Absent", draw_lottery: "Tirage au sort", points: "Points", launch_match: "Lancer le défi",
                     end_round: "Terminer la compétition", choose_category: "Choisissez la catégorie", question: "Question", category: "Catégorie",
                     back_categories: "Retour aux catégories", correct_answer: "Bonne réponse", show_answer: "Afficher la réponse",
@@ -577,8 +621,13 @@
                     start_next_round: "Démarrer le tour suivant", qualified: "Qualifié 🎉", out: "Éliminé",
                     save_end_today: "Enregistrer et terminer pour aujourd'hui", eliminated_status: "Éliminé", register_as_admin: "Inscrire une équipe (Admin)",
                     timeout_no_answer: "Temps écoulé / Pas de réponse", tie_warning: "⚠️ Égalité sur la ligne de qualification!", tie_breaker_btn: "Démarrer le bris d'égalité ⚔️",
-                    select_competition: "Sélectionnez la compétition", extend_reg: "Renouveler", save: "Enregistrer",
-                    tie_not_broken: "Égalité non rompue! Une autre question sera posée à chaque équipe."
+                    select_competition: "Sélectionnez la compétition", extend_reg: "Renouveler", save: "Enregistré avec succès",
+                    tie_not_broken: "Égalité non rompue! Une autre question sera posée à chaque équipe.",
+                    no_competitions_title: "Aucune compétition disponible",
+                    no_competitions_desc: "Veuillez revenir plus tard ou suivre nos annonces pour les prochaines compétitions.",
+                    back_home: "Retour à l'accueil",
+                    no_questions: "Aucune question disponible dans cette catégorie pour le moment!",
+                    deleted_success: "Supprimé avec succès"
                 }
             };
             const t = (key) => translations[lang.value][key] || key;
@@ -615,12 +664,12 @@
             const submitRegistration = async () => { 
                 const finalStatus = isAdmin.value ? 'accepted' : 'pending';
                 await supabaseClient.from('teams').insert([{ competition_id: selectedComp.value.id, team_name: regForm.value.team_name, whatsapp_number: regForm.value.whatsapp_number, members_data: regForm.value.members, payment_proof_url: regForm.value.payment_proof, status: finalStatus }]); 
-                alert(t('submit_final')); 
+                showToast(t('submit_final'), 'success'); 
                 if(isAdmin.value) { view.value = 'admin'; loadTeams(); } else { view.value = 'home'; }
             };
             
-            const saveCompetition = async () => { await supabaseClient.from('competitions').insert([newComp.value]); alert(t('save_publish')); adminTab.value='manage_comp'; loadCompetitions(); };
-            const deleteCompetition = async (id) => { if(confirm(t('delete'))) { await supabaseClient.from('competitions').delete().eq('id',id); loadCompetitions(); } };
+            const saveCompetition = async () => { await supabaseClient.from('competitions').insert([newComp.value]); showToast(t('save_publish'), 'success'); adminTab.value='manage_comp'; loadCompetitions(); };
+            const deleteCompetition = async (id) => { if(confirm(t('delete'))) { await supabaseClient.from('competitions').delete().eq('id',id); loadCompetitions(); showToast(t('deleted_success'), 'success'); } };
             
             const startEditingDate = (comp) => {
                 editingCompId.value = comp.id;
@@ -630,6 +679,7 @@
                 if (!newEndDate.value) return;
                 await supabaseClient.from('competitions').update({ end_date: newEndDate.value }).eq('id', id);
                 editingCompId.value = null;
+                showToast(t('save'), 'success');
                 loadCompetitions();
             };
 
@@ -642,22 +692,22 @@
                 loadTeams(); 
             };
             
-            const processBulkQuestions = async () => { const lines = bulkInput.value.split('\n').filter(l=>l.includes('|')); const qs = lines.map(l=>{ const[q,c,a,o] = l.split('|'); return { question_text: q.trim(), category: c.trim(), correct_answer: a.trim(), has_options: !!o, options: o ? o.split(',').map(x=>x.trim()) : null, round: targetRound.value, is_used: false }; }); if(qs.length) await supabaseClient.from('questions').insert(qs); alert(`${t('import_questions')} ${qs.length}`); bulkInput.value=''; getQuestionCount(); };
+            const processBulkQuestions = async () => { const lines = bulkInput.value.split('\n').filter(l=>l.includes('|')); const qs = lines.map(l=>{ const[q,c,a,o] = l.split('|'); return { question_text: q.trim(), category: c.trim(), correct_answer: a.trim(), has_options: !!o, options: o ? o.split(',').map(x=>x.trim()) : null, round: targetRound.value, is_used: false }; }); if(qs.length) await supabaseClient.from('questions').insert(qs); showToast(`${t('import_questions')} ${qs.length}`, 'success'); bulkInput.value=''; getQuestionCount(); };
             
             const prepareAttendance = () => { 
                 const acceptedTeams = allTeams.value.filter(t => t.status === 'accepted' && t.competition_id === activeMatchCompId.value);
                 if (acceptedTeams.length === 0) {
-                    alert(lang.value === 'ar' ? 'لا توجد فرق مقبولة لهذه المسابقة المحددة!' : 'Aucune équipe acceptée pour cette compétition!');
+                    showToast(lang.value === 'ar' ? 'لا توجد فرق مقبولة لهذه المسابقة المحددة!' : 'Aucune équipe acceptée pour cette compétition!', 'error');
                     return;
                 }
                 acceptedTeamsWithAttendance.value = acceptedTeams.map(t => ({ ...t, is_present: false })); 
                 matchStep.value = 'attendance'; 
             };
 
-            const runMatchLottery = () => { const presentTeams = acceptedTeamsWithAttendance.value.filter(team => team.is_present === true); if(presentTeams.length===0) { alert("لا توجد فرق حاضرة!"); return; } const shuffled =[...presentTeams]; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; } lotteryResult.value = shuffled; matchStep.value = 'lottery'; };
+            const runMatchLottery = () => { const presentTeams = acceptedTeamsWithAttendance.value.filter(team => team.is_present === true); if(presentTeams.length===0) { showToast(lang.value === 'ar' ? 'لا توجد فرق حاضرة!' : 'Aucune équipe présente!', 'error'); return; } const shuffled =[...presentTeams]; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; } lotteryResult.value = shuffled; matchStep.value = 'lottery'; };
             
             const startMatchLive = async () => { 
-                if(!lotteryResult.value.length) { alert("لا توجد نتائج قرعة!"); return; }
+                if(!lotteryResult.value.length) { showToast(lang.value === 'ar' ? 'لا توجد نتائج قرعة!' : 'Aucun résultat de tirage au sort!', 'error'); return; }
                 
                 for (const team of lotteryResult.value) {
                     team.final_score = 0;
@@ -716,7 +766,7 @@
             const pickQuestion = async (num) => { 
                 if(isQuestionUsed(num)) return; 
                 const { data, error } = await supabaseClient.from('questions').select('*').eq('round', activeMatchRound.value).eq('category', selectedCat.value).eq('is_used', false).limit(1); 
-                if(!data || data.length===0) { alert(t('no_questions')); return; } 
+                if(!data || data.length===0) { showToast(t('no_questions'), 'error'); return; } 
                 const q = data[0]; 
 
                 if (q.options && q.options.length > 0) {
@@ -819,7 +869,7 @@
                 for(const team of qualified) {
                     await supabaseClient.from('teams').update({ final_score: 0 }).eq('id', team.id);
                 }
-                alert(lang.value === 'ar' ? 'تم حفظ المتأهلين بنجاح. يمكنك إغلاق الموقع واستئناف المرحلة القادمة لاحقاً.' : 'Qualifiés enregistrés. Vous pouvez reprendre plus tard.');
+                showToast(lang.value === 'ar' ? 'تم حفظ المتأهلين بنجاح. يمكنك إغلاق الموقع واستئناف المرحلة القادمة لاحقاً.' : 'Qualifiés enregistrés. Vous pouvez reprendre plus tard.', 'success', 5000);
                 view.value = 'admin';
                 matchStep.value = 'setup';
                 loadTeams();
@@ -857,7 +907,7 @@
                     view.value = 'active_match';
                     currentMatchSubStep.value = 'category';
                 } else {
-                    alert("🏆 " + (lang.value === 'ar' ? 'انتهت جميع المراحل بنجاح! مبروك للفائزين.' : 'Toutes les étapes sont terminées! Félicitations aux gagnants.'));
+                    showToast("🏆 " + (lang.value === 'ar' ? 'انتهت جميع المراحل بنجاح! مبروك للفائزين.' : 'Toutes les étapes sont terminées! Félicitations aux gagnants.'), 'success', 6000);
                     view.value = 'admin';
                     matchStep.value = 'setup';
                     loadTeams();
@@ -891,7 +941,7 @@
                     if (activeMatchRound.value === 'كسر التعادل') {
                         const uniqueScores = new Set(matchQueue.value.map(t => t.final_score));
                         if (uniqueScores.size === 1) {
-                            alert(t('tie_not_broken'));
+                            showToast(t('tie_not_broken'), 'error', 4000);
                             currentQNum.value++; 
                             currentPlayingTeamIdx.value = 0; 
                             activeTeamScore.value = matchQueue.value[0].final_score || 0; 
@@ -928,7 +978,8 @@
                 loadCompetitions, openRegistration, handleFileUpload, handlePaymentProofUpload, submitRegistration, countAdminClicks, loadTeams, updateTeamStatus, formatDate,
                 saveCompetition, deleteCompetition, startEditingDate, saveNewEndDate, editingCompId, newEndDate, activeMatchCompId, processBulkQuestions, getQuestionCount, prepareAttendance, runMatchLottery, startMatchLive, showNumbersGrid, pickQuestion,
                 isQuestionUsed, revealAnswerOnly, handleOptionClick, scoreQuestion, forceExitMatch, goBack, addFileField, addBankField, newComp, tempFile, tempBank, bulkInput, AudioSys,
-                resultTimer, qualifyingCount, sortedTeams, startNextRoundLive, saveQualifiersAndEnd, hasTieBreaker, startTieBreaker
+                resultTimer, qualifyingCount, sortedTeams, startNextRoundLive, saveQualifiersAndEnd, hasTieBreaker, startTieBreaker,
+                toasts, showToast
             };
         }
     }).mount('#app');
